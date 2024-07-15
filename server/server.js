@@ -1,6 +1,9 @@
 const express = require("express");
 const { Pool } = require("pg");
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,13 +18,30 @@ const pool = new Pool({
 
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.post("/api/items", async (req, res) => {
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    cb(null, "uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+const upload = multer({ storage });
+
+app.post("/api/items", upload.single("image"), async (req, res) => {
   const { name, details } = req.body;
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
-    const query = "INSERT INTO items(name, details) VALUES($1, $2) RETURNING *";
-    const values = [name, details];
+    const query =
+      "INSERT INTO items(name, details, image_url) VALUES($1, $2, $3) RETURNING *";
+    const values = [name, details, imageUrl];
 
     const result = await pool.query(query, values);
     res.json(result.rows[0]);

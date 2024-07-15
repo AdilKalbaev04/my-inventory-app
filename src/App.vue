@@ -20,6 +20,7 @@
         placeholder="Детали предмета"
         v-model="newItem.details"
       />
+      <input type="file" @change="onFileChange" />
       <button @click="addItem">Добавить предмет</button>
     </div>
   </div>
@@ -40,44 +41,62 @@ export default {
     const newItem = ref({
       name: "",
       details: "",
+      image: null, // Добавлено поле для изображения
     });
 
-    async function fetchItems() {
+    const fetchItems = async () => {
       try {
         const response = await axios.get("http://localhost:3000/api/items");
         items.value = response.data;
       } catch (error) {
         console.error("Error fetching items", error);
       }
-    }
+    };
 
-    async function addItem() {
+    const addItem = async () => {
+      const formData = new FormData();
+      formData.append("name", newItem.value.name);
+      formData.append("details", newItem.value.details);
+      if (newItem.value.image) {
+        formData.append("image", newItem.value.image);
+      }
+
       try {
-        const response = await axios.post("http://localhost:3000/api/items", {
-          name: newItem.value.name,
-          details: newItem.value.details,
-        });
+        const response = await axios.post(
+          "http://localhost:3000/api/items",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
         items.value.push(response.data);
         clearForm();
       } catch (error) {
         console.error("Error adding item", error);
       }
-    }
+    };
 
-    async function deleteItem(itemId) {
+    const deleteItem = async (itemId) => {
       try {
         await axios.delete(`http://localhost:3000/api/items/${itemId}`);
         items.value = items.value.filter((item) => item.id !== itemId);
       } catch (error) {
         console.error("Error deleting item", error);
       }
-    }
+    };
 
-    function clearForm() {
+    const onFileChange = (event) => {
+      newItem.value.image = event.target.files[0];
+    };
+
+    const clearForm = () => {
       newItem.value.name = "";
       newItem.value.details = "";
-    }
+      newItem.value.image = null;
+    };
 
     onMounted(fetchItems);
 
@@ -86,6 +105,7 @@ export default {
       newItem,
       addItem,
       deleteItem,
+      onFileChange,
     };
   },
 };
