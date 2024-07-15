@@ -2,7 +2,7 @@
   <div class="inventory-item" @click="selectItem">
     <img
       v-if="item.image_url"
-      :src="`http://localhost:3000/uploads/${item.image_url}`"
+      :src="`http://localhost:3000${item.image_url}`"
       alt="item image"
     />
     <h3>{{ item.name }}</h3>

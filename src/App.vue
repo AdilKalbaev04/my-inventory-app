@@ -1,16 +1,26 @@
 <template>
-  <div :class="['app', theme]">
+  <div class="app" :class="theme">
     <h1>Мой инвентарь</h1>
     <button @click="toggleTheme">
       {{ theme === "light" ? "Темная тема" : "Светлая тема" }}
     </button>
-    <div class="inventory-list">
-      <InventoryItem
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        @select="selectItem"
-      />
+    <div class="content">
+      <div class="inventory-list">
+        <InventoryItem
+          v-for="item in items"
+          :key="item.id"
+          :item="item"
+          @select="selectItem"
+          @delete="deleteItem"
+        />
+      </div>
+      <div class="item-details" v-if="selectedItem">
+        <ItemModal
+          :item="selectedItem"
+          @close="selectedItem = null"
+          @delete="deleteItem"
+        />
+      </div>
     </div>
     <div class="add-item">
       <input
@@ -26,12 +36,6 @@
       <input type="file" @change="onFileChange" />
       <button @click="addItem">Добавить предмет</button>
     </div>
-    <ItemModal
-      v-if="selectedItem"
-      :item="selectedItem"
-      @close="selectedItem = null"
-      @delete="deleteItem"
-    />
   </div>
 </template>
 
@@ -49,13 +53,13 @@ export default {
   setup() {
     const items = ref([]);
     const selectedItem = ref(null);
-    const theme = ref("light");
-
     const newItem = ref({
       name: "",
       details: "",
       image: null,
     });
+
+    const theme = ref("light");
 
     const fetchItems = async () => {
       try {
@@ -79,7 +83,9 @@ export default {
           "http://localhost:3000/api/items",
           formData,
           {
-            headers: { "Content-Type": "multipart/form-data" },
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
 
@@ -94,7 +100,9 @@ export default {
       try {
         await axios.delete(`http://localhost:3000/api/items/${itemId}`);
         items.value = items.value.filter((item) => item.id !== itemId);
-        selectedItem.value = null;
+        if (selectedItem.value && selectedItem.value.id === itemId) {
+          selectedItem.value = null;
+        }
       } catch (error) {
         console.error("Error deleting item", error);
       }
@@ -123,9 +131,9 @@ export default {
     return {
       items,
       newItem,
+      selectedItem,
       addItem,
       deleteItem,
-      selectedItem,
       selectItem,
       onFileChange,
       theme,
@@ -137,16 +145,28 @@ export default {
 
 <style>
 .app {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
+.content {
+  display: flex;
+}
+
 .inventory-list {
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 20px;
+}
+
+.item-details {
+  flex: 1;
+  margin-left: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
 }
 
 .add-item {
@@ -162,13 +182,39 @@ export default {
   padding: 5px 10px;
 }
 
-.light {
+/* Dark Theme */
+.app.dark {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.app.dark .item-details {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+.app.dark .add-item input,
+.app.dark .add-item button {
+  background-color: #333;
+  color: #ffffff;
+  border-color: #444;
+}
+
+/* Light Theme */
+.app.light {
   background-color: #ffffff;
   color: #000000;
 }
 
-.dark {
-  background-color: #1e1e1e;
-  color: #ffffff;
+.app.light .item-details {
+  background-color: #f9f9f9;
+  border-color: #ccc;
+}
+
+.app.light .add-item input,
+.app.light .add-item button {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ccc;
 }
 </style>
