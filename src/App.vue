@@ -28,7 +28,7 @@
 <script>
 import { ref, onMounted } from "vue";
 import InventoryItem from "./components/InventoryItem.vue";
-import axios from "axios"; // Установите axios: npm install axios
+import axios from "axios";
 
 export default {
   components: {
@@ -79,7 +79,7 @@ export default {
       newItem.value.details = "";
     }
 
-    onMounted(fetchItems); // Fetch items initially when component is mounted
+    onMounted(fetchItems);
 
     return {
       items,
