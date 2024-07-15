@@ -1,12 +1,15 @@
 <template>
-  <div class="app">
+  <div :class="['app', theme]">
     <h1>Мой инвентарь</h1>
+    <button @click="toggleTheme">
+      {{ theme === "light" ? "Темная тема" : "Светлая тема" }}
+    </button>
     <div class="inventory-list">
       <InventoryItem
         v-for="item in items"
         :key="item.id"
         :item="item"
-        @delete="deleteItem"
+        @select="selectItem"
       />
     </div>
     <div class="add-item">
@@ -23,25 +26,35 @@
       <input type="file" @change="onFileChange" />
       <button @click="addItem">Добавить предмет</button>
     </div>
+    <ItemModal
+      v-if="selectedItem"
+      :item="selectedItem"
+      @close="selectedItem = null"
+      @delete="deleteItem"
+    />
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from "vue";
 import InventoryItem from "./components/InventoryItem.vue";
+import ItemModal from "./components/ItemModal.vue";
 import axios from "axios";
 
 export default {
   components: {
     InventoryItem,
+    ItemModal,
   },
   setup() {
     const items = ref([]);
+    const selectedItem = ref(null);
+    const theme = ref("light");
 
     const newItem = ref({
       name: "",
       details: "",
-      image: null, // Добавлено поле для изображения
+      image: null,
     });
 
     const fetchItems = async () => {
@@ -66,9 +79,7 @@ export default {
           "http://localhost:3000/api/items",
           formData,
           {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
+            headers: { "Content-Type": "multipart/form-data" },
           }
         );
 
@@ -83,9 +94,14 @@ export default {
       try {
         await axios.delete(`http://localhost:3000/api/items/${itemId}`);
         items.value = items.value.filter((item) => item.id !== itemId);
+        selectedItem.value = null;
       } catch (error) {
         console.error("Error deleting item", error);
       }
+    };
+
+    const selectItem = (item) => {
+      selectedItem.value = item;
     };
 
     const onFileChange = (event) => {
@@ -98,6 +114,10 @@ export default {
       newItem.value.image = null;
     };
 
+    const toggleTheme = () => {
+      theme.value = theme.value === "light" ? "dark" : "light";
+    };
+
     onMounted(fetchItems);
 
     return {
@@ -105,7 +125,11 @@ export default {
       newItem,
       addItem,
       deleteItem,
+      selectedItem,
+      selectItem,
       onFileChange,
+      theme,
+      toggleTheme,
     };
   },
 };
@@ -113,12 +137,15 @@ export default {
 
 <style>
 .app {
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
 }
 
 .inventory-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 20px;
 }
 
@@ -133,5 +160,15 @@ export default {
 
 .add-item button {
   padding: 5px 10px;
+}
+
+.light {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.dark {
+  background-color: #1e1e1e;
+  color: #ffffff;
 }
 </style>

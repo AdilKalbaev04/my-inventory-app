@@ -3,7 +3,6 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -22,14 +21,10 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-    cb(null, "uploads");
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 const upload = multer({ storage });

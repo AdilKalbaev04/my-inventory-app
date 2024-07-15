@@ -1,17 +1,11 @@
 <template>
-  <div class="inventory-item">
-    <h3>{{ item.name }}</h3>
+  <div class="inventory-item" @click="selectItem">
     <img
       v-if="item.image_url"
-      :src="`http://localhost:3000${item.image_url}`"
-      alt="Image"
-      class="item-image"
+      :src="`http://localhost:3000/uploads/${item.image_url}`"
+      alt="item image"
     />
-    <button @click="toggleDetailsPanel">Показать детали</button>
-    <div v-if="showDetailsPanel" class="details-panel">
-      <p>{{ item.details }}</p>
-    </div>
-    <button @click="deleteItem">Удалить</button>
+    <h3>{{ item.name }}</h3>
   </div>
 </template>
 
@@ -23,17 +17,9 @@ export default {
       required: true,
     },
   },
-  data() {
-    return {
-      showDetailsPanel: false,
-    };
-  },
   methods: {
-    toggleDetailsPanel() {
-      this.showDetailsPanel = !this.showDetailsPanel;
-    },
-    deleteItem() {
-      this.$emit("delete", this.item.id);
+    selectItem() {
+      this.$emit("select", this.item);
     },
   },
 };
@@ -41,26 +27,24 @@ export default {
 
 <style scoped>
 .inventory-item {
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  cursor: pointer;
 }
 
-.item-image {
-  max-width: 100%;
+.inventory-item img {
+  max-width: 100px;
   height: auto;
   margin-bottom: 10px;
 }
 
-.details-panel {
-  background-color: #f0f0f0;
-  padding: 10px;
-  margin-top: 5px;
-}
-
-button {
-  margin-top: 5px;
-  padding: 5px 10px;
+.inventory-item h3 {
+  font-size: 16px;
+  text-align: center;
 }
 </style>
