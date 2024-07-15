@@ -1,26 +1,117 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="app">
+    <h1>Мой инвентарь</h1>
+    <div class="inventory-list">
+      <InventoryItem
+        v-for="item in items"
+        :key="item.id"
+        :item="item"
+        @delete="deleteItem"
+      />
+    </div>
+    <div class="add-item">
+      <input
+        type="text"
+        placeholder="Название предмета"
+        v-model="newItem.name"
+      />
+      <input
+        type="text"
+        placeholder="Детали предмета"
+        v-model="newItem.details"
+      />
+      <button @click="addItem">Добавить предмет</button>
+    </div>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { ref, onMounted } from "vue";
+import InventoryItem from "./components/InventoryItem.vue";
+import axios from "axios"; // Установите axios: npm install axios
 
 export default {
-  name: 'App',
   components: {
-    HelloWorld
-  }
-}
+    InventoryItem,
+  },
+  setup() {
+    const items = ref([]);
+
+    const newItem = ref({
+      name: "",
+      details: "",
+    });
+
+    async function fetchItems() {
+      try {
+        const response = await axios.get("http://localhost:3000/api/items");
+        items.value = response.data;
+      } catch (error) {
+        console.error("Error fetching items", error);
+      }
+    }
+
+    async function addItem() {
+      try {
+        const response = await axios.post("http://localhost:3000/api/items", {
+          name: newItem.value.name,
+          details: newItem.value.details,
+        });
+
+        items.value.push(response.data);
+        clearForm();
+      } catch (error) {
+        console.error("Error adding item", error);
+      }
+    }
+
+    async function deleteItem(itemId) {
+      try {
+        await axios.delete(`http://localhost:3000/api/items/${itemId}`);
+        items.value = items.value.filter((item) => item.id !== itemId);
+      } catch (error) {
+        console.error("Error deleting item", error);
+      }
+    }
+
+    function clearForm() {
+      newItem.value.name = "";
+      newItem.value.details = "";
+    }
+
+    onMounted(fetchItems); // Fetch items initially when component is mounted
+
+    return {
+      items,
+      newItem,
+      addItem,
+      deleteItem,
+    };
+  },
+};
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.inventory-list {
+  margin-top: 20px;
+}
+
+.add-item {
+  margin-top: 20px;
+}
+
+.add-item input {
+  width: 200px;
+  margin-right: 10px;
+}
+
+.add-item button {
+  padding: 5px 10px;
 }
 </style>
